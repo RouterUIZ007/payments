@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Leer el nombre del archivo de log desde las propiedades de Spring Boot -->
+    <property name="LOG_PATTERN" value="${LOG_PATTERN:-%d{yyyy-MM-dd HH:mm:ss} - %msg%n}" />
+    <property name="LOG_FILE" value="${LOG_FILE_NAME:-logs/default.log}" />
+
+    <!-- Definir el appender que escribe solo en archivo -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_FILE}</file>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Configuración para los logs de Spring y Hibernate -->
+    <!-- Desactivar la aditividad para evitar la duplicación -->
+    <logger name="org.springframework.web" level="DEBUG" additivity="false">
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <!-- Desactivar la aditividad para evitar la duplicación -->
+    <logger name="org.hibernate" level="ERROR" additivity="false">
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <!-- Configurar el log root para que solo escriba en el archivo (sin salida en consola) -->
+    <root level="INFO">
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>

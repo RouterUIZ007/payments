@@ -42,16 +42,9 @@ public class PaymentController {
                     .status("-1")
                     .message("Payment not created: " + errors)
                     .build();
-
-            return ResponseEntity.badRequest().body(
-                    new ApiResponse<>(
-                            "400",
-                            "Validation failed",
-                            payment
-                    )
-            );
+            throw new UnprocessableEntityException(payment) {
+            };
         }
-
 
         var payment = paymentService.savePayment(request);
 

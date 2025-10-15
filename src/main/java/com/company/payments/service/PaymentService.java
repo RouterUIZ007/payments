@@ -102,4 +102,32 @@ public class PaymentService {
         Pageable pageable = PageRequest.of(page, paginate);
         return paymentRepository.findAll(spec, pageable);
     }
+
+    public Optional<Payment> findByReference(String reference) {
+        return paymentRepository.findByReference(reference);
+    }
+
+    public Payment updatePayment(PaymentRequest request) {
+
+        if (!request.status().equals("03")) {
+            return null;
+        }
+
+        Optional<Payment> paymentOptional = findByReference(request.reference());
+
+        if (paymentOptional.isPresent()) {
+            Payment res = paymentOptional.get();
+            if (res.getStatus().equals("03")){
+                return null;
+            }
+            res.setCancelDescription(request.updateDescription());
+            res.setStatus(request.status());
+
+            return paymentRepository.save(res);
+
+        }
+        return null;
+
+
+    }
 }

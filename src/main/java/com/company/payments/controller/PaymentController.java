@@ -114,4 +114,85 @@ public class PaymentController {
         );
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/payments/search")
+    public ResponseEntity<?> search(
+            @RequestParam("startCreationDate")
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime startCreationDate,
+            @RequestParam("endCreationDate")
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime endCreationDate,
+
+            @RequestParam("startPaymentDate")
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime startPaymentDate,
+            @RequestParam("endPaymentDate")
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime endPaymentDate,
+
+            @RequestParam("status") String status,
+            @RequestParam(value = "paginate", defaultValue = "10") Integer paginate,
+            @RequestParam(value = "page", defaultValue = "0") Integer page
+    ) throws Exception {
+
+        Page<Payment> resultados = paymentService.findByStatusAndDates(
+                startCreationDate, endCreationDate,
+                startPaymentDate, endPaymentDate,
+                status, paginate, page
+        );
+
+        if (resultados.getContent().isEmpty()) {
+            throw new MissingServletRequestParameterException("", "") {
+            };
+        }
+
+        List<SearchCreatePaymentResponse> paymentResponsesList = resultados.getContent().stream()
+                .map(payment -> SearchCreatePaymentResponse.builder()
+                        .paymentId(payment.getPaymentId())
+                        .amount(payment.getAmount())
+                        .reference(payment.getReference())
+                        .description(payment.getDescription())
+                        .dueDate(payment.getDueDate())
+                        .status(payment.getStatus())
+                        .callBackURL(payment.getCallbackURL())
+                        .callbackACKID(payment.getCallbackACKID())
+                        .cancelDescription(payment.getCancelDescription())
+                        .authorizationNumber(payment.getAuthorizationNumber())
+                        .paymentDate(payment.getPaymentDate())
+                        .build())
+                .collect(Collectors.toList());
+
+        ApiResponse<Page<SearchCreatePaymentResponse>> response = new ApiResponse<>(
+                "200",
+                "Payment retrieved successfully",
+                new PageImpl<>(paymentResponsesList, resultados.getPageable(), resultados.getTotalElements())
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/payment/cancel")
+    public ResponseEntity<?> cancelPayment(
+            @Valid
+            @RequestBody
+            PaymentRequest request,
+            BindingResult bindingResult
+    ) {
+
+        Payment payment = paymentService.updatePayment(request);
+
+        if (payment == null) {
+            throw new ConflictException("El pago ya fue procesado y no puede modificarse") {
+            };
+        }
+
+        ApiResponse<Payment> response = new ApiResponse<>(
+                "202",
+                "Payment canceled successfully",
+                payment);
+
+        URI location = URI.create("/payment/cancel/" + payment.getPaymentId());
+        return ResponseEntity.accepted().location(location).body(response);
+    }
 }

@@ -9,8 +9,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +26,7 @@ import java.time.LocalDateTime;
 public class AuthenticationController {
 
     private AuthenticationManager authenticationManager;
+    private PasswordEncoder passwordEncoder;
     private JwtUtil jwtUtil;
 
 
@@ -39,7 +42,13 @@ public class AuthenticationController {
                         user.getPassword()
                 )
         );
+
         final UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+        if (userDetails == null) {
+            String msj = "Credenciales invalidas";
+            throw new BadCredentialsException (msj) {};
+        }
 
         String time = userService.updateLastLogin(userDetails.getUsername());
 

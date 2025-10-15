@@ -57,6 +57,7 @@ public class PaymentService {
                 .reference(reference)
                 .status("01")
                 .message("Payment created successfully")
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         return paymentRepository.save(payment);

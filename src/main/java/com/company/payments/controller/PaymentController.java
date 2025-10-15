@@ -19,7 +19,9 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,6 +53,11 @@ public class PaymentController {
                     .build();
             throw new UnprocessableEntityException(payment) {
             };
+        }
+
+        LocalDate dueDateParsed = LocalDate.parse(request.dueDate(), formatter);
+        if (dueDateParsed.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("La fecha dueDate debe ser mayor a la fecha de hoy") {};
         }
 
         var payment = paymentService.savePayment(request);

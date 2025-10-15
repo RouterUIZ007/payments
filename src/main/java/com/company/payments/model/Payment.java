@@ -41,5 +41,6 @@ public class Payment {
     private String cancelDescription;
     private String paymentDate;
     private String authorizationNumber;
+    @Column(name = "updatedAt")
     private LocalDateTime updatedAt;
 }

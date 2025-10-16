@@ -92,9 +92,24 @@ En este caso vamos a importar el archivo **payment.postman_collection.json**
 Una vez que hayas importado la colección y configurado cualquier variable de entorno, puedes comenzar a hacer peticiones
 a tu API desde Postman:
 
+
+### register
+
+**POST**
+> {{SpringBoot}}/api/v1/auth/register
+
+Body, con los datos que vamos a registrar
+
+```json
+{
+  "username": "abi",
+  "password": "123456"
+}
+```
+
 ### authenticate
 
-**GET**
+**POST**
 > {{SpringBoot}}/api/v1/auth/authenticate
 
 Body, por ejemplo
@@ -105,6 +120,16 @@ Body, por ejemplo
   "password": "123456"
 }
 ```
+
+### TOKEN
+Al obtener el token se debe de copiar y pegar en:
+
+1. Ve al collection `payment`
+2. en `Authorization` selecionar `Bearer Token` 
+3. Coloca el token dentro del `Token`
+
+para que las demas peticiones no lo requieran
+
 
 ### Creación de Pago Referenciado
 

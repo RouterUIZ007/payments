@@ -55,7 +55,6 @@ public class AuthenticationController {
         AuthResponse authResponse = new AuthResponse(
                 jwtUtil.generateToken(userDetails.getUsername()),
                 time);
-
         ApiResponse<AuthResponse> response = new ApiResponse<>(
                 "200",
                 "Success",
@@ -65,4 +64,20 @@ public class AuthenticationController {
 
     }
 
+    @PostMapping("/register")
+    public String registerUser(@RequestBody User user) {
+        if (userService.existsByUsername(user)) {
+            throw new IllegalArgumentException("User already exists") {};
+        }
+        final User newUser = new User(
+                null,
+                user.getUsername(),
+                passwordEncoder.encode(user.getPassword()),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        userService.save(newUser);
+        return "User registered successfully";
+
+    }
 }

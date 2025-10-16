@@ -95,16 +95,5 @@ public class GlobalExceptionHandler {
     }
 
 
-    // Manejo de excepciones internas del servidor (500)
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<String>> handleInternalServerError(Exception ex) {
-        ApiResponse<String> response = new ApiResponse<>(
-                String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()),
-                "Internal server error",
-                "Ocurrió un error interno en el servidor al procesar la solicitud." // O puedes enviar ex.getMessage() si estás en desarrollo.
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
-
 
 }

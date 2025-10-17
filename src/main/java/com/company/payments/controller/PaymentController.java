@@ -51,155 +51,31 @@ public class PaymentController {
                     .status("-1")
                     .message("Payment not created: " + errors)
                     .build();
-            throw new UnprocessableEntityException(payment) {
-            };
-        }
-
-        LocalDate dueDateParsed = LocalDate.parse(request.dueDate(), formatter);
-        if (dueDateParsed.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("La fecha dueDate debe ser mayor a la fecha de hoy") {};
-        }
-
-        var payment = paymentService.savePayment(request);
-
-
-        CreatePaymentResponse paymentResponse = CreatePaymentResponse.builder()
-                .paymentId(payment.getPaymentId())
-                .reference(payment.getReference())
-                .amount(payment.getAmount())
-                .description(payment.getDescription())
-                .creationDate(payment.getCreationDate())
-                .status(payment.getStatus())
-                .message(payment.getMessage())
-                .build();
-
-
-        ApiResponse<CreatePaymentResponse> response = new ApiResponse<>(
-                "201",
-                "Payment created successfully",
-                paymentResponse
-        );
-
-        URI location = URI.create("/payment");
-        return ResponseEntity.created(location).body(response);
-
+    @PostMapping("/payment")
+    public ResponseEntity<?> createPayment(@Valid @RequestBody PaymentRequest request, BindingResult bindingResult) {
+        var payment = paymentService.savePayment(request, bindingResult);
+        return ResponseEntity.created(URI.create("/payment")).body(payment);
     }
 
     @GetMapping("/payment/{reference}/{paymentId}")
-    public ResponseEntity<ApiResponse<?>> getPaymentByTypeAndId(
-            @PathVariable String reference,
-            @PathVariable Long paymentId
-    ) {
-        Payment payment = paymentService.findByReferenceAndPaymentId(
-                reference.trim(), paymentId
-        );
-        if (payment == null) {
-            throw new ResourceNotFoundException(
-                    "El pago solicitado no existe o no " +
-                            "se encontró con la referencia o ID dado.") {
-            };
-        }
-
-        SearchCreatePaymentResponse paymentResponse = SearchCreatePaymentResponse.builder()
-                .paymentId(payment.getPaymentId())
-                .amount(payment.getAmount())
-                .reference(payment.getReference())
-                .description(payment.getDescription())
-                .dueDate(payment.getDueDate())
-                .status(payment.getStatus())
-                .callBackURL(payment.getCallbackURL())
-                .callbackACKID(payment.getCallbackACKID())
-                .cancelDescription(payment.getCancelDescription())
-                .authorizationNumber(payment.getAuthorizationNumber())
-                .paymentDate(payment.getPaymentDate())
-                .build();
-
-        ApiResponse<SearchCreatePaymentResponse> response = new ApiResponse<>(
-                "200",
-                "Payment verified successfully",
-                paymentResponse
-        );
+    public ResponseEntity<?> getPaymentByTypeAndId(@PathVariable String reference, @PathVariable Long paymentId) {
+        var response = paymentService.findByReferenceAndPaymentId(reference.trim(), paymentId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/payments/search")
-    public ResponseEntity<?> search(
-            @RequestParam("startCreationDate")
-            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-            LocalDateTime startCreationDate,
-            @RequestParam("endCreationDate")
-            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-            LocalDateTime endCreationDate,
-
-            @RequestParam("startPaymentDate")
-            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-            LocalDateTime startPaymentDate,
-            @RequestParam("endPaymentDate")
-            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-            LocalDateTime endPaymentDate,
-
-            @RequestParam("status") String status,
-            @RequestParam(value = "paginate", defaultValue = "10") Integer paginate,
-            @RequestParam(value = "page", defaultValue = "0") Integer page
-    ) throws Exception {
-
-        Page<Payment> resultados = paymentService.findByStatusAndDates(
-                startCreationDate, endCreationDate,
-                startPaymentDate, endPaymentDate,
-                status, paginate, page
+    public ResponseEntity<?> searchPayment(SearchPaymentRequest request) throws Exception {
+        var response = paymentService.findByStatusAndDates(
+                request.startCreationDate(), request.endCreationDate(),
+                request.startPaymentDate(), request.endPaymentDate(),
+                request.status(), request.paginate(), request.page()
         );
-
-        if (resultados.getContent().isEmpty()) {
-            throw new MissingServletRequestParameterException("", "") {
-            };
-        }
-
-        List<SearchCreatePaymentResponse> paymentResponsesList = resultados.getContent().stream()
-                .map(payment -> SearchCreatePaymentResponse.builder()
-                        .paymentId(payment.getPaymentId())
-                        .amount(payment.getAmount())
-                        .reference(payment.getReference())
-                        .description(payment.getDescription())
-                        .dueDate(payment.getDueDate())
-                        .status(payment.getStatus())
-                        .callBackURL(payment.getCallbackURL())
-                        .callbackACKID(payment.getCallbackACKID())
-                        .cancelDescription(payment.getCancelDescription())
-                        .authorizationNumber(payment.getAuthorizationNumber())
-                        .paymentDate(payment.getPaymentDate())
-                        .build())
-                .collect(Collectors.toList());
-
-        ApiResponse<Page<SearchCreatePaymentResponse>> response = new ApiResponse<>(
-                "200",
-                "Payment retrieved successfully",
-                new PageImpl<>(paymentResponsesList, resultados.getPageable(), resultados.getTotalElements())
-        );
-
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/payment/cancel")
-    public ResponseEntity<?> cancelPayment(
-            @Valid
-            @RequestBody
-            PaymentRequest request,
-            BindingResult bindingResult
-    ) {
-
-        Payment payment = paymentService.updatePayment(request);
-
-        if (payment == null) {
-            throw new ConflictException("El pago ya fue procesado y no puede modificarse") {
-            };
-        }
-
-        ApiResponse<Payment> response = new ApiResponse<>(
-                "202",
-                "Payment canceled successfully",
-                payment);
-
-        URI location = URI.create("/payment/cancel/" + payment.getPaymentId());
-        return ResponseEntity.accepted().location(location).body(response);
+    public ResponseEntity<?> cancelPayment(@Valid @RequestBody PaymentRequest request, BindingResult bindingResult) {
+        var response = paymentService.updatePayment(request, bindingResult);
+        return ResponseEntity.ok(response);
     }
 }
